@@ -1,0 +1,41 @@
+import { test, expect } from '@playwright/test';
+
+test('test', async ({ page }) => {
+  await page.goto('https://automationexercise.com/');
+  await expect(page.getByText('AutomationExercise Full-').first()).toBeVisible();
+  await page.getByRole('link', { name: ' Products' }).click();
+  await expect(page.locator('body')).toContainText('All Products');
+  await expect(page.getByRole('heading', { name: 'Category' })).toBeVisible();
+  await expect(page.locator('body')).toContainText('Brands');
+  await expect(page.locator('.features_items > div:nth-child(3)')).toBeVisible();
+  await page.locator('.nav.nav-pills.nav-justified > li > a').first().click();
+  await expect(page.locator('section')).toContainText('Blue Top');
+  await expect(page.locator('section')).toContainText('Category: Women > Tops');
+  await expect(page.getByText('Rs.')).toBeVisible();
+  await expect(page.getByRole('button', { name: ' Add to cart' })).toBeVisible();
+  await expect(page.getByText('Brand: Polo')).toBeVisible();
+  await expect(page.locator('section')).toContainText('Condition: New');
+  await expect(page.getByText('Availability: In Stock')).toBeVisible();
+  await page.getByRole('link', { name: ' Cart' }).click();
+  await page.goto('https://automationexercise.com/product_details/1');
+  await page.getByRole('button', { name: ' Add to cart' }).click();
+  await expect(page.getByRole('heading', { name: 'Added!' })).toBeVisible();
+  await expect(page.getByText('Your product has been added')).toBeVisible();
+  await expect(page.locator('#cartModal')).toContainText('Continue Shopping');
+  await page.getByRole('link', { name: 'View Cart' }).click();
+  await expect(page.locator('#product-1')).toContainText('Blue Top');
+  await expect(page.getByRole('button', { name: '1' })).toBeVisible();
+  await page.getByRole('cell', { name: '' }).locator('a').click();
+  await expect(page.locator('b')).toContainText('Cart is empty!');
+  await page.getByRole('link', { name: 'here' }).click();
+  
+  //await expect(page.getByRole('heading', { name: 'Added!' })).toBeVisible();
+  //await page.getByRole('button', { name: 'Continue Shopping' }).click();
+  await expect(page.locator('body')).toContainText('Men Tshirt');
+  await page.locator('div:nth-child(4) > .product-image-wrapper > .single-products > .product-overlay > .overlay-content > .btn').click();
+  await page.getByRole('link', { name: 'View Cart' }).click();
+  await expect(page.locator('#product-1')).toContainText('Blue Top');
+  await expect(page.locator('#product-2')).toContainText('Men Tshirt');
+  await page.getByRole('row', { name: 'Product Image Men Tshirt Men' }).getByRole('button').click();
+  await page.getByText('Proceed To Checkout').click();
+});
