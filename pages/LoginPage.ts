@@ -27,5 +27,31 @@ export class LoginPage {
   async verifyLoginFormVisible() {
     await expect(this.page.locator('#form')).toContainText('Login to your account');
   }
+
+async fillLoginForm(email: string, password: string) {
+  await this.page
+    .locator('form')
+    .filter({ hasText: 'Login' })
+    .getByPlaceholder('Email Address')
+    .fill(email);
+
+  await this.page.getByRole('textbox', { name: 'Password' }).fill(password);
 }
+
+async submitLogin() {
+  await this.page.getByRole('button', { name: 'Login' }).click();
+}
+
+async verifyLoginError() {
+  await expect(this.page.locator('#form')).toContainText('Your email or password is incorrect!');
+}
+
+async verifyLoginSuccess(username: string) {
+  await expect(this.page.getByText(`Logged in as ${username}`)).toBeVisible();
+  await expect(this.page.getByRole('link', { name: ' Logout' })).toBeVisible();
+}
+
+
+}
+
 

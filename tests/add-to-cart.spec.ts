@@ -13,7 +13,8 @@ test('Agregar producto al carrito sin estar logueado', async ({ page }) => {
 
   await products.verifyLoaded();
   await products.viewFirstProduct();
-  await products.verifyProductDetail();
+  await products.verifyProductDetail('Blue Top', 'Rs. 500'); // <- así va bien
+
 
   await products.setQuantity(1); // O 2 si querés testear más cantidad
   await products.addToCart();
