@@ -1,0 +1,27 @@
+name: Run API Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-api-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔄 Checkout repository
+        uses: actions/checkout@v3
+
+      - name: 🧰 Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: 📦 Install Newman
+        run: npm install -g newman
+
+      - name: 🧪 Run Postman API Tests
+        run: newman run postman/automationexercise_full_suite_collection.json
