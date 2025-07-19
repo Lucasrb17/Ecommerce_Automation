@@ -24,4 +24,4 @@ jobs:
         run: npm install -g newman
 
       - name: 🧪 Run Postman API Tests
-        run: newman run automationexercise-api-collection-repaired.json
+        run: newman run postman/automationexercise-api-collection-repaired.json
