@@ -77,7 +77,7 @@ npm install -g newman
 Execute the tests:
 
 ```bash
-newman run postman/automationexercise-api-collection-fixed.json
+newman run postman/automationexercise-api-collection-repaired.json
 ```
 
 ---
