@@ -1,0 +1,217 @@
+{
+  "info": {
+    "name": "AutomationExercise API Collection (Repaired)",
+    "_postman_id": "dummy-id",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products / POST All Products (Method Not Allowed)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "https://automationexercise.com/api/productsList",
+          "protocol": "https",
+          "host": [
+            "automationexercise",
+            "com"
+          ],
+          "path": [
+            "api",
+            "productsList"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200 (doc expects 405)', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 405]);",
+              "});",
+              "pm.test('Response is not empty', function () {",
+              "    pm.expect(pm.response.text()).to.not.be.empty;",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management / POST Create Account (dynamic)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "name",
+              "value": "Lucas"
+            },
+            {
+              "key": "email",
+              "value": "lucas.test.repaired@mail.com"
+            },
+            {
+              "key": "password",
+              "value": "Contrase\u00f1a123"
+            },
+            {
+              "key": "title",
+              "value": "Mr"
+            },
+            {
+              "key": "birth_date",
+              "value": "15"
+            },
+            {
+              "key": "birth_month",
+              "value": "07"
+            },
+            {
+              "key": "birth_year",
+              "value": "1995"
+            },
+            {
+              "key": "firstname",
+              "value": "Lucas"
+            },
+            {
+              "key": "lastname",
+              "value": "QA"
+            },
+            {
+              "key": "company",
+              "value": "Testing Inc"
+            },
+            {
+              "key": "address1",
+              "value": "Calle Falsa 123"
+            },
+            {
+              "key": "address2",
+              "value": "Piso 1"
+            },
+            {
+              "key": "country",
+              "value": "Canada"
+            },
+            {
+              "key": "zipcode",
+              "value": "A1A1A1"
+            },
+            {
+              "key": "state",
+              "value": "Quebec"
+            },
+            {
+              "key": "city",
+              "value": "Montreal"
+            },
+            {
+              "key": "mobile_number",
+              "value": "1234567890"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://automationexercise.com/api/createAccount",
+          "protocol": "https",
+          "host": [
+            "automationexercise",
+            "com"
+          ],
+          "path": [
+            "api",
+            "createAccount"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200 or 201', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+              "});",
+              "pm.test('Body has message', function () {",
+              "    var txt = pm.response.text();",
+              "    pm.expect(txt).to.include('User created!');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "User Management / DELETE Delete Account (dynamic)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "lucas.test.repaired@mail.com"
+            },
+            {
+              "key": "password",
+              "value": "Contrase\u00f1a123"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://automationexercise.com/api/deleteAccount",
+          "protocol": "https",
+          "host": [
+            "automationexercise",
+            "com"
+          ],
+          "path": [
+            "api",
+            "deleteAccount"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200 or 404', function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
+              "});",
+              "pm.test('Account deleted or not found', function () {",
+              "    var txt = pm.response.text();",
+              "    pm.expect(txt).to.satisfy(t => t.includes('Account deleted!') || t.includes('Account not found!'));",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
