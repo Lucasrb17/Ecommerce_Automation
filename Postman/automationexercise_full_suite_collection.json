@@ -1,0 +1,361 @@
+{
+  "info": {
+    "name": "Automation Exercise API Collection - Full Suite",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Products",
+      "item": [
+        {
+          "name": "GET All Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "https://automationexercise.com/api/productsList",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "productsList"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code is 200\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Debe contener lista de productos\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json.products.length).to.be.above(0);",
+                  "    pm.expect(json.products[0].name.toLowerCase()).to.include(\"top\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST All Products (Method Not Allowed)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "https://automationexercise.com/api/productsList",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "productsList"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 aunque deber\u00eda ser 405 (documentaci\u00f3n inconsistente)\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Respuesta contiene productos como en el GET\", () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.be.an('object');",
+                  "    pm.expect(json.products, \"Campo 'products' debe existir\").to.exist;",
+                  "    pm.expect(json.products.length).to.be.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Search Product (missing parameter)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": []
+            },
+            "url": {
+              "raw": "https://automationexercise.com/api/searchProduct",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "searchProduct"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 200 (la API no lanza error como deber\u00eda)\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Debe devolver mensaje de error por par\u00e1metro faltante\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"search_product parameter is missing\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST Login (Valid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "Testlucas140725@gmail.com"
+                },
+                {
+                  "key": "password",
+                  "value": "contrase\u00f1a123"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://automationexercise.com/api/verifyLogin",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "verifyLogin"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 OK\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje de \u00e9xito devuelto\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"User exists!\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "User Management",
+      "item": [
+        {
+          "name": "POST Create Account (dynamic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "name",
+                  "value": "Lucas"
+                },
+                {
+                  "key": "email",
+                  "value": "{{createdEmail}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{createdPassword}}"
+                },
+                {
+                  "key": "title",
+                  "value": "Mr"
+                },
+                {
+                  "key": "birth_date",
+                  "value": "15"
+                },
+                {
+                  "key": "birth_month",
+                  "value": "07"
+                },
+                {
+                  "key": "birth_year",
+                  "value": "1995"
+                },
+                {
+                  "key": "firstname",
+                  "value": "Lucas"
+                },
+                {
+                  "key": "lastname",
+                  "value": "QA"
+                },
+                {
+                  "key": "company",
+                  "value": "Testing Inc"
+                },
+                {
+                  "key": "address1",
+                  "value": "Calle Falsa 123"
+                },
+                {
+                  "key": "address2",
+                  "value": "Piso 1"
+                },
+                {
+                  "key": "country",
+                  "value": "Canada"
+                },
+                {
+                  "key": "zipcode",
+                  "value": "A1A1A1"
+                },
+                {
+                  "key": "state",
+                  "value": "Quebec"
+                },
+                {
+                  "key": "city",
+                  "value": "Montreal"
+                },
+                {
+                  "key": "mobile_number",
+                  "value": "1234567890"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://automationexercise.com/api/createAccount",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "createAccount"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status code es 201 - cuenta creada\", () => {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "pm.test(\"Mensaje de \u00e9xito\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"User created!\");",
+                  "});",
+                  "pm.collectionVariables.set(\"createdEmail\", \"lucas_test_dynamic@mail.com\");",
+                  "pm.collectionVariables.set(\"createdPassword\", \"TestPassword123\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE Delete Account (dynamic)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "{{createdEmail}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{createdPassword}}"
+                }
+              ]
+            },
+            "url": {
+              "raw": "https://automationexercise.com/api/deleteAccount",
+              "protocol": "https",
+              "host": [
+                "automationexercise",
+                "com"
+              ],
+              "path": [
+                "api",
+                "deleteAccount"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status 200 - cuenta eliminada\", () => {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "pm.test(\"Mensaje de confirmaci\u00f3n\", () => {",
+                  "    pm.expect(pm.response.text()).to.include(\"Account deleted!\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
