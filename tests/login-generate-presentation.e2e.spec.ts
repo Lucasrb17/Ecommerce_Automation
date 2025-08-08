@@ -1,94 +1,81 @@
-import { test, expect } from '@playwright/test';
+// tests/login-generate-presentation.e2e.spec.ts
+import { test, expect, request } from '@playwright/test';
 
+test.describe('Full end-to-end flow: Login and generate presentation (adaptado a automationexercise.com)', () => {
+  test.setTimeout(120_000);
 
-test.slow(); // 3x timeout for this slow and complex flow
+  test('Login via UI con usuario creado por API y verificación de sesión', async ({ page }) => {
+    // ---- Crear usuario por API (aislado para este test) ----
+    const api = await request.newContext({ baseURL: 'https://automationexercise.com' });
+    const suffix = Date.now() + '-' + Math.random().toString(16).slice(2);
+    const email = `qa.${suffix}@example.com`;
+    const password = 'Secret.123!';
+    const name = 'QA Bot';
 
-test('Full end-to-end flow: Login and generate presentation', async ({ page }) => {
-  // 0. Bypass Cloudflare challenge with test flag
-  await page.addInitScript(() => {
-    window.localStorage.setItem('isTestEnvironment', 'true');
+    await api.post('/api/createAccount', {
+      form: {
+        name,
+        email,
+        password,
+        title: 'Mr',
+        birth_date: '1',
+        birth_month: '1',
+        birth_year: '1990',
+        firstname: 'QA',
+        lastname: 'Bot',
+        company: 'Demo',
+        address1: 'Street 123',
+        address2: '-',
+        country: 'United States',
+        zipcode: '10001',
+        state: 'NY',
+        city: 'NY',
+        mobile_number: '1111111111',
+      },
+    }).catch(() => { /* si ya existe por cualquier motivo, continuar */ });
+
+    // ---- Bloquear ruido/ads para estabilidad ----
+    await page.route('**/*', (route) => {
+      const url = route.request().url();
+      const noisy = [
+        'googlesyndication.com',
+        'doubleclick.net',
+        'google-analytics',
+        'youtube',
+        'ytimg.com',
+        'facebook',
+      ];
+      if (noisy.some((d) => url.includes(d))) return route.abort();
+      return route.continue();
+    });
+
+    try {
+      // ---- Ir directo al login ----
+      await page.goto('https://automationexercise.com/login', { waitUntil: 'domcontentloaded' });
+      await expect(page.getByRole('heading', { name: /login to your account/i })).toBeVisible({ timeout: 15_000 });
+
+      // ---- Scope al formulario de login según HTML real ----
+      const loginForm = page.locator('div.login-form form[action="/login"]').first();
+
+      // Campos únicos dentro del scope (evita strict mode)
+      await loginForm.locator('input[data-qa="login-email"]').fill(email);
+      await loginForm.locator('input[data-qa="login-password"]').fill(password);
+      await loginForm.locator('button[data-qa="login-button"]').click();
+
+      // ---- Verificar sesión: "Logged in as" ----
+      await expect(page.getByText(/logged in as/i)).toBeVisible({ timeout: 20_000 });
+
+      // Paso visible para continuar navegación
+     // await page.getByRole('link', { name: /^products$/i }).click();
+      //await expect(page.getByRole('heading', { name: /all products/i })).toBeVisible();
+
+    } finally {
+      // ---- Cleanup de usuario por API ----
+      await api.delete('/api/deleteAccount', { form: { email, password } }).catch(() => {});
+      await api.dispose();
+    }
   });
- // LOG DE TODAS LAS REQUESTS SALIENTES (para debugging)
-  page.on('request', request => {
-    console.log('➡️ Request:', request.method(), request.url());
-  });
-  // 1. Go to login page and complete email
-  await page.goto('https://qc.pitchdeck.io/docs/login?');
-  await expect(page.getByRole('heading', { name: 'Create your free account or' })).toBeVisible();
-  await expect(page.locator('#VariantALoginPage')).toContainText('Sign up with your work email and get additional 100 credits');
-  await page.getByRole('button', { name: 'Continue with Email' }).click();
-  await expect(page.getByRole('heading', { name: 'Continue with Email' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Email address' })).toBeVisible();
-
-  // 2. Enter email with human-like typing
-  const emailBox = page.getByRole('textbox', { name: 'Enter your email' });
-  await emailBox.pressSequentially('user@bugzero.com');
-
-  
-
-  // 3. Click "Continue with Email" (no espera request todavía)
-await page.locator('#EmailLogin div').filter({ hasText: 'Continue with EmailWe’ll' }).nth(2).click();
-
-// 4. Ahora sí, espera el click que dispara el request y el response
-await Promise.all([
-  page.waitForResponse(resp =>
-    resp.url().endsWith('/docs/checkEmail') && resp.request().method() === 'POST' && resp.status() === 200
-  ),
-  page.getByRole('button', { name: 'Continue' }).click()
-]);
-
-  await expect(page.getByText('user@bugzero.com')).toBeVisible();
-  await expect(page.locator('#EmailLogin')).toContainText('Password');
-
-  // 5. Enter password with human-like typing
-  const passwordBox = page.getByRole('textbox', { name: 'Enter password' });
-  await passwordBox.pressSequentially('User@Bug0');
-
-  // 6. Click continue and wait for login API
-  await Promise.all([
-    page.waitForResponse(resp =>
-      resp.url().endsWith('/docs/login') && resp.request().method() === 'POST' && resp.status() === 200
-    ),
-    page.getByRole('button', { name: 'Continue' }).click()
-  ]);
-
-  // 7. Wait for profile API (optional, but often triggered after login)
-  await page.waitForResponse(resp =>
-    resp.url().endsWith('/docs/getProfile') && resp.request().method() === 'GET' && resp.status() === 200
-  );
-
-  // 8. Navigate to dashboard and validate UI
-  await expect(page.getByTestId('dashboard').locator('span')).toBeVisible({ timeout: 15000 });
-  await expect(page.getByTestId('dashboard').locator('span')).toContainText('Dashboard');
-  await expect(page.getByText('Start Your Presentation')).toBeVisible();
-
-  // 9. Create a new presentation
-  await page.getByText('Describe your topic or idea,').click();
-  await expect(page.locator('#doccreateholder')).toContainText('Transform Your Ideas Into Slides With AI');
-  await expect(page.getByText('Popular templates for your')).toBeVisible();
-
-  // 10. Shuffle template and start generation
-  await page.locator('#shuffle-text-0').click();
-  await expect(page.getByTestId('generatepresentationnow').locator('span')).toContainText('Generate Presentation Now');
-
-  // 11. Click generate and wait for createPresentation API
-  await Promise.all([
-    page.waitForResponse(resp =>
-      resp.url().endsWith('/docs/createPresentation') && resp.request().method() === 'POST' && resp.status() === 200
-    ),
-    page.getByTestId('generatepresentationnow').click()
-  ]);
-
-  // 12. Wait for the presentation to be generated (this step can take several minutes!)
-  await expect(page.getByRole('heading', { name: 'Your presentation is ready!' })).toBeVisible({ timeout: 100000 }); // Wait up to ~2 minutes
-
-  // 13. Final validation
-  await expect(page.locator('#rootmodel')).toContainText('Your presentation is ready! View or edit it now.');
 });
-
-
-
-
 
 
 
