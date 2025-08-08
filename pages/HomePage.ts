@@ -1,42 +1,57 @@
-import { Page, Locator, expect } from '@playwright/test';
+import { expect, Page } from '@playwright/test';
+import { validUser } from '../utils/test-data';
 
 export class HomePage {
-  readonly page: Page;
-  readonly loginLink: Locator;
-  readonly logoutLink: Locator;
-  readonly productsHref: Locator;
-
-  constructor(page: Page) {
-    this.page = page;
-    // Evitamos glyphs en el name (inestables por icon fonts)
-    this.loginLink = page.getByRole('link', { name: /signup\s*\/\s*login/i });
-    this.logoutLink = page.getByRole('link', { name: /logout/i });
-    this.productsHref = page.locator('a[href="/products"]').first();
-  }
+  constructor(private readonly page: Page) {}
 
   async navigate() {
-    await this.page.goto('/', { waitUntil: 'domcontentloaded' });
+    await this.page.goto('https://automationexercise.com/');
+    await expect(this.page).toHaveURL(/automationexercise\.com/);
   }
 
-  async ensureGuest() {
-    const loggedBadge = this.page.getByText(/logged in as/i).first();
-    if (await loggedBadge.isVisible().catch(() => false)) {
-      await this.logoutLink.click();
-      await expect(this.page).toHaveURL(/\/(login|)$/);
-    }
-    // Cerrar cookies/newsletter si aparece intermitente
-    const cookieBtn = this.page.locator('button:has-text("Accept")').first();
-    if (await cookieBtn.isVisible().catch(() => false)) await cookieBtn.click();
+  async goToLogin() {
+    await this.page.getByRole('link', { name: /signup \/ login/i }).click();
+    await expect(this.page.getByRole('heading', { name: /login to your account/i })).toBeVisible();
   }
 
   async goToProducts() {
-    await this.productsHref.click();
+    await this.page.getByRole('link', { name: /products/i }).click();
     await expect(this.page).toHaveURL(/\/products/);
   }
 
-  async verifyLoggedIn(username: string) {
-    await expect(this.page.getByText(new RegExp(`Logged in as\\s*${username}`, 'i'))).toBeVisible();
-    await expect(this.logoutLink).toBeVisible();
+  async login(email: string = validUser.email, password: string = validUser.password) {
+    await this.goToLogin();
+    await this.page.locator('input[data-qa="login-email"]').fill(email);
+    await this.page.locator('input[data-qa="login-password"]').fill(password);
+    await this.page.locator('button[data-qa="login-button"]').click();
+    await this.verifyLoggedIn(validUser.name);
+  }
+
+  async verifyLoggedIn(expectedUserName: string = validUser.name) {
+    const re = expectedUserName
+      ? new RegExp(`logged\\s+in\\s+as\\s+${expectedUserName}`, 'i')
+      : /logged\s+in\s+as/i;
+
+    await expect
+      .poll(async () => {
+        const el = this.page.getByText(re);
+        return (await el.isVisible().catch(() => false)) ? true : null;
+      }, {
+        message: `No se encontró el texto "Logged in as ${expectedUserName}"`,
+        timeout: 15000,
+      })
+      .toBeTruthy();
+  }
+
+  async verifyLoggedOut() {
+    await expect(this.page.getByRole('link', { name: /signup \/ login/i })).toBeVisible();
+  }
+
+  async logout() {
+    const logged = this.page.getByText(/logged in as/i);
+    if (await logged.isVisible().catch(() => false)) {
+      await this.page.getByRole('link', { name: /logout/i }).click();
+      await this.verifyLoggedOut();
+    }
   }
 }
-
