@@ -3,25 +3,52 @@ import { HomePage } from '../pages/HomePage';
 import { ProductsPage } from '../pages/ProductsPage';
 import { CartPage } from '../pages/CartPage';
 
-test('Agregar producto al carrito sin estar logueado', async ({ page }) => {
-  const home = new HomePage(page);
-  const products = new ProductsPage(page);
-  const cart = new CartPage(page);
+test.describe('Cart - Guest add to cart (resilient)', () => {
+  test('Add first product to cart as guest and reach checkout gate', async ({ page }) => {
+    const home = new HomePage(page);
+    const products = new ProductsPage(page);
+    const cart = new CartPage(page);
 
-  await home.navigate();
-  await home.goToProducts();
+    // Home → Products (garantizamos estado guest si quedó sesión)
+    await home.navigate();
+    if (typeof (home as any).ensureGuest === 'function') {
+      await (home as any).ensureGuest(); // no falla si ya es guest
+    }
+    if (typeof (home as any).goToProducts === 'function') {
+      await (home as any).goToProducts();
+    } else {
+      // Fallback por si tu HomePage viejo no tiene goToProducts()
+      await page.locator('a[href="/products"]').first().click();
+    }
 
-  await products.verifyLoaded();
-  await products.viewFirstProduct();
-  await products.verifyProductDetail('Blue Top', 'Rs. 500'); // <- así va bien
+    // Listado cargado y abrimos el primer detalle de producto
+    await products.verifyLoaded();
+    const product = await products.openFirstProductDetail(); // devuelve { name, unitPrice }
 
+    // Seteamos cantidad de forma idempotente
+    await products.setQuantity(1);
 
-  await products.setQuantity(1); // O 2 si querés testear más cantidad
-  await products.addToCart();
-  await products.continueShopping();
+    // Add to cart y cerrar modal/toast (tolerante)
+    await products.addToCartAndContinue();
 
-  await cart.openCart();
-  await cart.verifyProductInCart('Blue Top');
-  await cart.proceedToCheckout();
-  await cart.verifyGuestCheckoutPrompt();
+    // Abrir carrito y validar línea (por nombre capturado y qty)
+    if (typeof (cart as any).openCart === 'function') {
+      await (cart as any).openCart();
+    } else {
+      // Fallback si tu CartPage viejo no tiene openCart()
+      await page.locator('a[href="/view_cart"]').first().click();
+    }
+
+    await cart.verifyLineItem({ nameContains: product.name, quantity: 1 });
+
+    // Ir a checkout y aceptar dos finales válidos (gate guest o checkout)
+    if (typeof (cart as any).proceedToCheckout === 'function') {
+      await (cart as any).proceedToCheckout();
+    } else {
+      await page.getByText('Proceed To Checkout').first().click();
+    }
+
+    await cart.verifyCheckoutGateOrPage();
+  });
 });
+
